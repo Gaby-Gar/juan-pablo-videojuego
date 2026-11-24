@@ -585,6 +585,7 @@ export class MountainScene extends Phaser.Scene {
         }
     }
 
+
     damagePlayer() {
         if (
             this.isInvulnerable ||
@@ -603,15 +604,30 @@ export class MountainScene extends Phaser.Scene {
         if (lives <= 0) {
             this.isRestarting = true;
 
-            this.player.setVelocity(0, 0);
-            this.player.body.enable = false;
+            // Colocar a Juan sobre la plataforma segura.
+            const deathY =
+                this.checkpoint.y === 1760
+                    ? 1773
+                    : this.checkpoint.y + 16;
+
+            this.player.setPosition(
+                this.checkpoint.x,
+                deathY
+            );
+
+            this.cameras.main.centerOn(
+                this.player.x,
+                this.player.y
+            );
+
+            this.player.playDeath();
 
             this.showMessage(
                 'CASO ARCHIVADO\nReintentando la montaña...',
-                1200
+                1500
             );
 
-            this.time.delayedCall(1200, () => {
+            this.time.delayedCall(1500, () => {
                 GameState.restartLevel();
                 this.scene.restart();
             });
@@ -619,7 +635,7 @@ export class MountainScene extends Phaser.Scene {
             return;
         }
 
-        // Reaparecer en la última plataforma segura.
+        // Regresar a la última plataforma segura.
         this.player.setPosition(
             this.checkpoint.x,
             this.checkpoint.y
@@ -628,6 +644,9 @@ export class MountainScene extends Phaser.Scene {
         this.player.setVelocity(0, 0);
         this.player.jumpsUsed = 0;
         this.player.wasGrounded = false;
+
+        // Mostrar postura de daño.
+        this.player.playHurt();
 
         this.tweens.add({
             targets: this.player,
@@ -643,7 +662,9 @@ export class MountainScene extends Phaser.Scene {
         });
     }
 
+
     
+
     completeMountain() {
         if (this.levelComplete) {
             return;
@@ -651,21 +672,19 @@ export class MountainScene extends Phaser.Scene {
 
         this.levelComplete = true;
 
-        // Guardar las monedas obtenidas
-        // y desbloquear el castillo.
         GameState.completeLevel();
 
-        this.player.setVelocity(0, 0);
-        this.player.body.enable = false;
+        // Celebración de Juan.
+        this.player.playVictory();
 
         this.showMessage(
             '¡MONTAÑA SUPERADA!\n' +
             'Las pruebas están completas.\n' +
             'Siguiente destino: Castillo del Último Veredicto',
-            1800
+            2000
         );
 
-        this.time.delayedCall(1800, () => {
+        this.time.delayedCall(2000, () => {
             this.cameras.main.fadeOut(500, 0, 0, 0);
 
             this.cameras.main.once(
@@ -676,6 +695,7 @@ export class MountainScene extends Phaser.Scene {
             );
         });
     }
+
 
 
     update() {

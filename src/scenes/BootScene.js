@@ -6,9 +6,37 @@ export class BootScene extends Phaser.Scene {
         super('BootScene');
     }
 
+    preload() {
+        const path = `${import.meta.env.BASE_URL}assets/characters/juan/`;
+
+        this.load.image('juan-idle', `${path}juan_idle.png`);
+        this.load.image('juan-walk-01', `${path}juan_walk_01.png`);
+        this.load.image('juan-walk-02', `${path}juan_walk_02.png`);
+        this.load.image('juan-jump', `${path}juan_jump.png`);
+        this.load.image('juan-hurt', `${path}juan_hurt.png`);
+        this.load.image('juan-death', `${path}juan_death.png`);
+        this.load.image('juan-victory', `${path}juan_victory.png`);
+    }
+
     create() {
         this.createPlaceholderTextures();
+        this.createPlayerAnimations();
+
         this.scene.start('MenuScene');
+    }
+
+    createPlayerAnimations() {
+        if (!this.anims.exists('juan-walk')) {
+            this.anims.create({
+                key: 'juan-walk',
+                frames: [
+                    { key: 'juan-walk-01' },
+                    { key: 'juan-walk-02' }
+                ],
+                frameRate: 6,
+                repeat: -1
+            });
+        }
     }
 
     createPlaceholderTextures() {

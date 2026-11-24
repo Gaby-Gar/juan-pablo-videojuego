@@ -1099,10 +1099,8 @@ export class CastleScene extends Phaser.Scene {
     // 13. SISTEMA DE DAÑO
     // =====================================
 
-    damagePlayer(
-        enemy = null,
-        cause = 'fall'
-    ) {
+
+    damagePlayer(enemy = null, cause = 'fall') {
         if (
             this.isInvulnerable ||
             this.isRestarting ||
@@ -1113,69 +1111,65 @@ export class CastleScene extends Phaser.Scene {
 
         this.isInvulnerable = true;
 
-        const lives =
-            GameState.loseLife();
+        const lives = GameState.loseLife();
 
-        this.events.emit(
-            'livesChanged'
-        );
+        this.events.emit('livesChanged');
 
-        // Sin vidas: reiniciar nivel.
+        // Derrota.
         if (lives <= 0) {
             this.isRestarting = true;
 
-            this.player.setVelocity(
-                0,
-                0
-            );
+            // Evitar que Juan muera fuera de la pantalla
+            // o que quede oculto debajo de la lava.
+            if (
+                cause === 'lava' ||
+                cause === 'fall'
+            ) {
+                this.player.setPosition(
+                    this.checkpointX, 448
+                );
 
-            this.player.body.enable = false;
+                this.cameras.main.centerOn(
+                    this.player.x,
+                    this.player.y
+                );
+            }
+
+            this.player.playDeath();
 
             this.showMessage(
                 'CASO ARCHIVADO\n' +
                 'Reintentando el castillo...',
-                1200
+                1500
             );
 
-            this.time.delayedCall(
-                1200,
-                () => {
-                    GameState.restartLevel();
-                    this.scene.restart();
-                }
-            );
+            this.time.delayedCall(1500, () => {
+                GameState.restartLevel();
+                this.scene.restart();
+            });
 
             return;
         }
 
-        if (
-            cause === 'slime' &&
-            enemy
-        ) {
-            // Slimes: empujón.
-            // Sin teletransporte.
+        // Mostrar postura de daño.
+        this.player.playHurt();
+
+        if (cause === 'slime' && enemy) {
             const direction =
-                this.player.x < enemy.x
-                    ? -1
-                    : 1;
+                this.player.x < enemy.x ? -1 : 1;
 
             this.player.setVelocity(
                 direction * 220,
                 -250
             );
         } else {
-            // Lava, pinchos o caída:
-            // regresar al checkpoint.
+            // Lava, pinchos o caída.
             this.player.setPosition(
                 this.checkpointX,
                 400
             );
 
-            this.player.setVelocity(
-                0,
-                0
-            );
-
+            this.player.setVelocity(0, 0);
             this.player.jumpsUsed = 0;
         }
 
@@ -1193,6 +1187,7 @@ export class CastleScene extends Phaser.Scene {
             }
         });
     }
+
 
     // =====================================
     // 14. INTERACCIÓN CON EL COFRE
@@ -1226,6 +1221,7 @@ export class CastleScene extends Phaser.Scene {
     // =====================================
 
    
+
     completeCastle() {
         if (this.levelComplete) {
             return;
@@ -1235,8 +1231,8 @@ export class CastleScene extends Phaser.Scene {
 
         GameState.completeLevel();
 
-        this.player.setVelocity(0, 0);
-        this.player.body.enable = false;
+        // Celebración de Juan.
+        this.player.playVictory();
 
         this.chest.setFillStyle(0xd6a14d);
 
@@ -1244,13 +1240,14 @@ export class CastleScene extends Phaser.Scene {
             '¡COFRE ABIERTO!\n' +
             'Has reunido las 30 monedas.\n' +
             '¡El caso ha sido resuelto!',
-            1800
+            2000
         );
 
-        this.time.delayedCall(1800, () => {
+        this.time.delayedCall(2000, () => {
             this.scene.start('EndingScene');
         });
     }
+
 
 
     // =====================================

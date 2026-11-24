@@ -303,6 +303,7 @@ export class ForestScene extends Phaser.Scene {
         );
     }
 
+ 
     damagePlayer(enemy = null) {
         if (
             this.isInvulnerable ||
@@ -317,19 +318,29 @@ export class ForestScene extends Phaser.Scene {
         const lives = GameState.loseLife();
         this.events.emit('livesChanged');
 
-        // Reiniciar al perder las tres vidas.
+        // Derrota.
         if (lives <= 0) {
             this.isRestarting = true;
 
-            this.player.setVelocity(0, 0);
-            this.player.body.enable = false;
+            // Si cayó al vacío, mostrarlo en una zona segura.
+            if (this.player.y > 540) {
+                this.player.setPosition(
+                    this.checkpointX, 448
+                );
+
+                this.cameras.main.centerOn(
+                    this.player.x, this.player.y
+                );
+            }
+
+            this.player.playDeath();
 
             this.showMessage(
                 'CASO ARCHIVADO\nReintentando el bosque...',
-                1200
+                1500
             );
 
-            this.time.delayedCall(1200, () => {
+            this.time.delayedCall(1500, () => {
                 GameState.restartLevel();
                 this.scene.restart();
             });
@@ -337,8 +348,10 @@ export class ForestScene extends Phaser.Scene {
             return;
         }
 
+        // Daño sin perder todas las vidas.
+        this.player.playHurt();
+
         if (enemy) {
-            // El slime causa retroceso, sin teletransportar.
             const direction =
                 this.player.x < enemy.x ? -1 : 1;
 
@@ -346,7 +359,6 @@ export class ForestScene extends Phaser.Scene {
                 direction * 220, -250
             );
         } else {
-            // Una caída devuelve al jugador a zona segura.
             this.player.setPosition(
                 this.checkpointX, 400
             );
@@ -369,28 +381,26 @@ export class ForestScene extends Phaser.Scene {
         });
     }
 
+
     
+
     completeForest() {
         if (this.levelComplete) return;
 
         this.levelComplete = true;
 
-        // Guardar las monedas y desbloquear la montaña.
         GameState.completeLevel();
 
-        // Detener al personaje.
-        this.player.setVelocity(0, 0);
-        this.player.body.enable = false;
+        // Celebración de Juan.
+        this.player.playVictory();
 
-        // Mostrar mensaje de transición.
         this.showMessage(
             '¡BOSQUE SUPERADO!\n' +
             'Siguiente destino: Montaña de las Pruebas',
-            1800
+            2000
         );
 
-        // Cambiar de nivel después de 1.8 segundos.
-        this.time.delayedCall(1800, () => {
+        this.time.delayedCall(2000, () => {
             this.cameras.main.fadeOut(500, 0, 0, 0);
 
             this.cameras.main.once(
@@ -401,6 +411,7 @@ export class ForestScene extends Phaser.Scene {
             );
         });
     }
+
 
 
     update() {
