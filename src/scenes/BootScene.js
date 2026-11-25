@@ -72,6 +72,40 @@ export class BootScene extends Phaser.Scene {
 
         this.load.image('forest-exit', `${objectsPath}forest_exit.png`);
 
+        // =====================================
+        // RECURSOS DE LA MONTAÑA
+        // =====================================
+
+        // Fondo vertical.
+        this.load.image(
+            'mountain-background',
+            `${backgroundsPath}mountain_background.png`
+        );
+
+        // Plataformas normales.
+        this.load.image(
+            'mountain-platform',
+            `${tilesPath}mountain_platform.png`
+        );
+
+        // Plataformas temporales agrietadas.
+        this.load.image(
+            'mountain-platform-fragile',
+            `${tilesPath}mountain_platform_fragile.png`
+        );
+
+        // Plataformas de puntos de control.
+        this.load.image(
+            'mountain-checkpoint',
+            `${tilesPath}mountain_checkpoint.png`
+        );
+
+        // Entrada al castillo.
+        this.load.image(
+            'mountain-exit',
+            `${objectsPath}mountain_exit.png`
+        );
+
     }
 
     // =====================================

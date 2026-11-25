@@ -1,4 +1,3 @@
-
 import Phaser from 'phaser';
 import { Player } from '../entities/Player.js';
 import { CoinManager } from '../systems/CoinManager.js';
@@ -70,7 +69,6 @@ export class MountainScene extends Phaser.Scene {
 
         this.cameras.main.setDeadzone(160, 90);
 
-
         // Volver a la selección de niveles con ESC.
         this.input.keyboard.on('keydown-ESC', () => {
             if (this.isRestarting || this.levelComplete) {
@@ -83,63 +81,70 @@ export class MountainScene extends Phaser.Scene {
 
             this.scene.start('LevelSelectScene');
         });
-
     }
+
+    // =====================================
+    // FONDO DE LA MONTAÑA
+    // =====================================
 
     createBackground() {
         this.cameras.main.setBackgroundColor('#b9d8eb');
 
-        const graphics = this.add.graphics();
-        graphics.setDepth(-5);
+        this.add.image(
+            0,
+            0,
+            'mountain-background'
+        )
+        .setOrigin(0, 0)
+        .setDisplaySize(
+            this.worldWidth,
+            this.worldHeight
+        )
+        .setDepth(-5);
 
-        // Montañas decorativas.
-        graphics.fillStyle(0x90a6b2);
-
-        graphics.fillTriangle(
-            0, 1900,
-            260, 200,
-            520, 1900
-        );
-
-        graphics.fillTriangle(
-            300, 1900,
-            700, 100,
-            1100, 1900
-        );
-
-        graphics.fillStyle(0x728b99, 0.55);
-
-        graphics.fillTriangle(
-            0, 1900,
-            110, 650,
-            400, 1900
-        );
-
-        graphics.fillTriangle(
-            580, 1900,
-            900, 480,
-            1200, 1900
-        );
-
+        // Título del nivel.
         this.add.text(
-            190,
-            1790,
+            660,
+            1745,
             'MONTAÑA DE LAS PRUEBAS',
             {
-                fontFamily: 'Arial',
-                fontSize: '29px',
+                fontFamily: 'Pixelify Sans, monospace',
+                fontSize: '30px',
                 fontStyle: 'bold',
-                color: '#263f50'
+                color: '#f5e6c8',
+                stroke: '#263448',
+                strokeThickness: 6,
+                align: 'center',
+                lineSpacing: 5,
+                shadow: {
+                    offsetX: 2,
+                    offsetY: 3,
+                    color: '#17202d',
+                    fill: true
+                }
             }
-        );
+        )
+        .setOrigin(0.5)
+        .setDepth(1);
     }
 
-    
- 
+    // =====================================
+    // PLATAFORMAS Y TERRENO
+    // =====================================
+
     createPlatforms() {
         this.platforms = this.physics.add.staticGroup();
 
-        const platform = (x, y, width, height, color) => {
+        const platform = (
+            x,
+            y,
+            width,
+            height,
+            color,
+            textureKey
+        ) => {
+
+            // Cuerpo físico de la plataforma.
             const object = this.add.rectangle(
                 x, y, width, height, color
             );
@@ -147,14 +152,99 @@ export class MountainScene extends Phaser.Scene {
             this.physics.add.existing(object, true);
             this.platforms.add(object);
 
+            // Ocultar el rectángulo provisional.
+            object.setVisible(false);
+
+            let visual;
+
+            // =====================================
+            // TERRENO DEL BOSQUE
+            // =====================================
+
+            if (textureKey === 'forest-ground') {
+
+                visual = this.add.tileSprite(
+                    x,
+                    y,
+                    width,
+                    height,
+                    textureKey
+                );
+
+                visual.setOrigin(0.5);
+                visual.setTileScale(1, height / 64);
+                visual.setDepth(0);
+
+            // =====================================
+            // PLATAFORMAS DE PUNTOS DE CONTROL
+            // =====================================
+
+            } else if (textureKey === 'mountain-checkpoint') {
+
+                // Una sola imagen de musgo,
+                // flores y hongos.
+                visual = this.add.image(
+                    x,
+                    y + height / 2,
+                    textureKey
+                );
+
+                visual.setOrigin(0.5, 1);
+                visual.setDisplaySize(width, 60);
+                visual.setDepth(0);
+
+            // =====================================
+            // PLATAFORMAS NORMALES Y TEMPORALES
+            // =====================================
+
+            } else {
+
+                const frame = this.textures.getFrame(
+                    textureKey
+                );
+
+                visual = this.add.tileSprite(
+                    x,
+                    y,
+                    width,
+                    height,
+                    textureKey
+                );
+
+                const scale = height / frame.height;
+
+                visual.setTileScale(scale, scale);
+                visual.setDepth(0);
+            }
+
+            // Asociar la imagen al cuerpo físico.
+            object.visual = visual;
+
             return object;
         };
 
-        // Suelo inicial.
-        platform(480, 1840, 960, 70, 0x667e72);
+        // =====================================
+        // SUELO INICIAL
+        // =====================================
+
+        // Reutilizar el terreno del bosque.
+        platform(
+            480,
+            1852.5,
+            960,
+            95,
+            0x667e72,
+            'forest-ground'
+        );
+
+        // =====================================
+        // CAMINO PRINCIPAL
+        // =====================================
 
         // 12 plataformas del camino principal.
-        // Cada una está 130 px más arriba que la anterior.
+        // Cada una está 130 px más arriba
+        // que la anterior.
+
         this.steps = [
             { x: 220, y: 1730 },
             { x: 350, y: 1600 },
@@ -171,7 +261,9 @@ export class MountainScene extends Phaser.Scene {
         ];
 
         this.steps.forEach((step, index) => {
+
             const isRest = [3, 7, 11].includes(index);
+
             const isTemporary = [8, 9, 10].includes(index);
 
             const width = isRest ? 240 : 170;
@@ -186,13 +278,30 @@ export class MountainScene extends Phaser.Scene {
                 color = 0xd49b48;
             }
 
+            // Seleccionar una sola textura
+            // para cada tipo de plataforma.
+            let textureKey = 'mountain-platform';
+
+            if (isRest) {
+                textureKey = 'mountain-checkpoint';
+            }
+
+            if (isTemporary) {
+                textureKey = 'mountain-platform-fragile';
+            }
+
             const object = platform(
                 step.x,
                 step.y,
                 width,
                 24,
-                color
+                color,
+                textureKey
             );
+
+            // =====================================
+            // PLATAFORMAS TEMPORALES
+            // =====================================
 
             if (isTemporary) {
                 this.temporaryPlatforms.push({
@@ -206,8 +315,12 @@ export class MountainScene extends Phaser.Scene {
             }
         });
 
+        // =====================================
+        // PLATAFORMAS OPCIONALES
+        // =====================================
+
         // 6 plataformas opcionales para explorar.
-        // Color verde claro para distinguirlas.
+
         const optionalPlatforms = [
             { x: 110, y: 1600 },
             { x: 120, y: 1470 },
@@ -225,15 +338,28 @@ export class MountainScene extends Phaser.Scene {
                 step.y,
                 150,
                 24,
-                0x739b77
+                0x739b77,
+                'mountain-platform'
             );
         });
 
-        // Plataforma de llegada.
-        platform(480, 170, 260, 28, 0x526e5c);
+        // =====================================
+        // PLATAFORMA DE LLEGADA
+        // =====================================
+
+        platform(
+            480,
+            170,
+            260,
+            28,
+            0x526e5c,
+            'mountain-platform'
+        );
     }
 
-
+    // =====================================
+    // JUGADOR
+    // =====================================
 
     createPlayer() {
         this.player = new Player(
@@ -241,6 +367,10 @@ export class MountainScene extends Phaser.Scene {
             220,
             1760
         );
+
+        // Mantener a Juan delante de los
+        // elementos gráficos del escenario.
+        this.player.setDepth(5);
 
         // Doble salto exclusivo de esta escena.
         this.player.setDoubleJump(true);
@@ -251,7 +381,9 @@ export class MountainScene extends Phaser.Scene {
         );
     }
 
-    
+    // =====================================
+    // MONEDAS
+    // =====================================
 
     createCoins() {
         this.coinManager = new CoinManager(
@@ -284,12 +416,16 @@ export class MountainScene extends Phaser.Scene {
         });
     }
 
+    // =====================================
+    // LETREROS
+    // =====================================
 
     createSigns() {
         this.signs = [
             {
                 x: 340,
                 y: 1785,
+                messagePosition: 'top',
                 text:
                     'Toda buena defensa necesita pruebas.\n' +
                     'Presiona SALTAR otra vez en el aire ' +
@@ -298,99 +434,241 @@ export class MountainScene extends Phaser.Scene {
             {
                 x: 350,
                 y: 765,
+                messagePosition: 'bottom',
                 text:
-                    '¡Cuidado! Las plataformas naranjas ' +
+                    '¡Cuidado! Las plataformas agrietadas ' +
                     'desaparecen después de pisarlas.\n' +
                     'Sigue ascendiendo hacia el castillo.'
             }
         ];
 
         this.signs.forEach(sign => {
-            this.add.image(sign.x, sign.y + 32.5, 'sign')
-                .setOrigin(0.5, 1)
-                .setDisplaySize(72, 104);
+            this.add.image(
+                sign.x,
+                sign.y + (sign.x === 340 ? 20 : 32.5),
+                'sign'
+            )
+            .setOrigin(0.5, 1)
+            .setDisplaySize(72, 104);
         });
     }
 
-    
+    // =====================================
+    // ENTRADA AL CASTILLO
+    // =====================================
+
     createExit() {
         this.exitX = 480;
         this.exitY = 95;
 
-        this.add.rectangle(
+        this.add.image(
             this.exitX,
-            this.exitY,
-            90,
-            120,
-            0x566a7e
-        ).setStrokeStyle(5, 0x344455);
-
-        this.add.text(
-            this.exitX,
-            this.exitY,
-            'CASTILLO',
-            {
-                fontFamily: 'Arial',
-                fontSize: '14px',
-                color: '#ffffff'
-            }
-        ).setOrigin(0.5);
+            156,
+            'mountain-exit'
+        )
+        .setOrigin(0.5, 1)
+        .setDisplaySize(168, 140)
+        .setDepth(0);
     }
 
+    // =====================================
+    // INTERFAZ Y MENSAJES
+    // =====================================
 
     createInterface() {
-        this.add.text(
-            20,
-            85,
-            'A/D: mover | ESPACIO: doble salto | E: interactuar',
-            {
-                fontFamily: 'Arial',
-                fontSize: '16px',
-                color: '#ffffff',
-                backgroundColor: '#344b5c',
-                padding: { x: 10, y: 7 }
-            }
-        ).setScrollFactor(0).setDepth(100);
 
-        this.message = this.add.text(
+        // Las instrucciones de movimiento
+        // se muestran desde GameHUD.
+
+        // Contenedor fijo para los avisos.
+        this.messageContainer = this.add.container(
             480,
-            450,
-            '',
-            {
-                fontFamily: 'Arial',
-                fontSize: '20px',
-                color: '#ffffff',
-                backgroundColor: '#344b5c',
-                padding: { x: 18, y: 12 },
-                align: 'center',
-                wordWrap: { width: 750 }
-            }
+            450
         )
-        .setOrigin(0.5)
         .setScrollFactor(0)
         .setDepth(200)
         .setVisible(false);
+
+        // Fondo y marco del aviso.
+        this.messageBackground = this.add.graphics();
+
+        // Encabezado.
+        this.messageTitle = this.add.text(
+            0,
+            0,
+            'AVISO',
+            {
+                fontFamily: 'Pixelify Sans, monospace',
+                fontSize: '20px',
+                fontStyle: 'bold',
+                color: '#ffd166'
+            }
+        ).setOrigin(0.5);
+
+        // Contenido del aviso.
+        this.message = this.add.text(
+            0,
+            0,
+            '',
+            {
+                fontFamily: 'Pixelify Sans, monospace',
+                fontSize: '20px',
+                color: '#f5e6c8',
+                align: 'center',
+                lineSpacing: 5,
+                wordWrap: { width: 700 }
+            }
+        ).setOrigin(0.5);
+
+        this.messageContainer.add([
+            this.messageBackground,
+            this.messageTitle,
+            this.message
+        ]);
     }
 
-    showMessage(text, duration = 3000) {
+    // =====================================
+    // MOSTRAR AVISOS
+    // =====================================
+
+    showMessage(
+        text,
+        duration = 3000,
+        position = 'bottom'
+    ) {
         if (this.messageTimer) {
             this.messageTimer.remove();
         }
 
         this.message.setText(text);
-        this.message.setVisible(true);
+
+        // Ajustar el tamaño del panel al contenido.
+        const width = Math.max(
+            320,
+            this.message.width + 64
+        );
+
+        const height = this.message.height + 76;
+
+        const left = -width / 2;
+        const top = -height / 2;
+
+        this.messageBackground.clear();
+
+        // Sombra del panel.
+        this.messageBackground.fillStyle(
+            0x10151d,
+            0.65
+        );
+
+        this.messageBackground.fillRect(
+            left + 5,
+            top + 5,
+            width,
+            height
+        );
+
+        // Fondo exterior.
+        this.messageBackground.fillStyle(
+            0x15243a,
+            0.98
+        );
+
+        this.messageBackground.fillRect(
+            left,
+            top,
+            width,
+            height
+        );
+
+        // Marco exterior dorado.
+        this.messageBackground.lineStyle(
+            3,
+            0xd6a14d,
+            1
+        );
+
+        this.messageBackground.strokeRect(
+            left,
+            top,
+            width,
+            height
+        );
+
+        // Marco interior.
+        this.messageBackground.lineStyle(
+            1,
+            0x8b704b,
+            0.8
+        );
+
+        this.messageBackground.strokeRect(
+            left + 6,
+            top + 6,
+            width - 12,
+            height - 12
+        );
+
+        // Separador del encabezado.
+        this.messageBackground.fillStyle(
+            0xd6a14d,
+            0.6
+        );
+
+        this.messageBackground.fillRect(
+            left + 24,
+            top + 40,
+            width - 48,
+            2
+        );
+
+        // Posición del encabezado.
+        this.messageTitle.setPosition(
+            0,
+            top + 23
+        );
+
+        // Posición del contenido.
+        this.message.setPosition(
+            0,
+            top + 54 + this.message.height / 2
+        );
+
+        // El primer cartel aparece arriba.
+        // Los demás mensajes aparecen abajo.
+        if (position === 'top') {
+
+            this.messageContainer.setPosition(
+                480,
+                82 + height / 2
+            );
+
+        } else {
+
+            this.messageContainer.setPosition(
+                480,
+                520 - height / 2
+            );
+        }
+
+        this.messageContainer.setVisible(true);
 
         this.messageTimer = this.time.delayedCall(
             duration,
             () => {
-                this.message.setVisible(false);
+                this.messageContainer.setVisible(false);
                 this.messageTimer = null;
             }
         );
     }
 
-    // Detectar cuándo Juan Pablo aterriza
+    // =====================================
+    // DETECCIÓN DE PLATAFORMAS TEMPORALES
+    // =====================================
+
+    // Detectar cuándo Juan aterriza
     // sobre una plataforma temporal.
+
     updateTemporaryPlatforms() {
         if (!this.player.body.blocked.down) {
             return;
@@ -399,6 +677,7 @@ export class MountainScene extends Phaser.Scene {
         const playerBottom = this.player.body.bottom;
 
         for (const temp of this.temporaryPlatforms) {
+
             if (!temp.active || temp.triggered) {
                 continue;
             }
@@ -421,6 +700,10 @@ export class MountainScene extends Phaser.Scene {
         }
     }
 
+    // =====================================
+    // ACTIVACIÓN DE PLATAFORMAS TEMPORALES
+    // =====================================
+
     activateTemporaryPlatform(temp) {
         if (temp.triggered) {
             return;
@@ -429,8 +712,10 @@ export class MountainScene extends Phaser.Scene {
         temp.triggered = true;
 
         // Parpadea durante dos segundos.
+        // La animación se aplica a la imagen.
+
         temp.tween = this.tweens.add({
-            targets: temp.object,
+            targets: temp.object.visual,
             alpha: 0.25,
             duration: 160,
             yoyo: true,
@@ -440,6 +725,7 @@ export class MountainScene extends Phaser.Scene {
         temp.timer = this.time.delayedCall(
             2000,
             () => {
+
                 if (temp.tween) {
                     temp.tween.stop();
                     temp.tween = null;
@@ -448,16 +734,20 @@ export class MountainScene extends Phaser.Scene {
                 temp.active = false;
                 temp.disappearing = true;
 
-                temp.object.setVisible(false);
+                // Ocultar la textura y desactivar
+                // el cuerpo físico.
+                temp.object.visual.setVisible(false);
                 temp.object.body.enable = false;
 
                 // Reaparece después de tres segundos.
                 temp.timer = this.time.delayedCall(
                     3000,
                     () => {
+
+                        // Restaurar colisión y textura.
                         temp.object.body.enable = true;
-                        temp.object.setVisible(true);
-                        temp.object.setAlpha(1);
+                        temp.object.visual.setVisible(true);
+                        temp.object.visual.setAlpha(1);
 
                         temp.active = true;
                         temp.triggered = false;
@@ -469,7 +759,10 @@ export class MountainScene extends Phaser.Scene {
         );
     }
 
-    
+    // =====================================
+    // PUNTOS DE CONTROL
+    // =====================================
+
     updateCheckpoint() {
         if (!this.player.body.blocked.down) {
             return;
@@ -494,6 +787,7 @@ export class MountainScene extends Phaser.Scene {
         ];
 
         for (const point of checkpoints) {
+
             const closeX =
                 Math.abs(this.player.x - point.x) < 95;
 
@@ -521,6 +815,10 @@ export class MountainScene extends Phaser.Scene {
         }
     }
 
+    // =====================================
+    // DAÑO POR CAÍDA
+    // =====================================
+
     updateFallDamage() {
         const body = this.player.body;
 
@@ -534,7 +832,9 @@ export class MountainScene extends Phaser.Scene {
 
         // Al comenzar a descender, guardar
         // la altura desde donde empezó la caída.
+
         if (body.velocity.y > 0 && !grounded) {
+
             if (this.fallStartY === null) {
                 this.fallStartY = this.player.y;
             }
@@ -552,17 +852,22 @@ export class MountainScene extends Phaser.Scene {
 
         // Reiniciar medición al aterrizar
         // o comenzar un nuevo ascenso.
+
         if (grounded || body.velocity.y < 0) {
             this.fallStartY = null;
         }
 
         // Protección adicional al caer por
         // debajo de la zona de juego.
+
         if (this.player.y > 1880) {
             this.damagePlayer();
         }
     }
 
+    // =====================================
+    // PÉRDIDA DE VIDAS Y REAPARICIÓN
+    // =====================================
 
     damagePlayer() {
         if (
@@ -577,6 +882,7 @@ export class MountainScene extends Phaser.Scene {
         this.fallStartY = null;
 
         const lives = GameState.loseLife();
+
         this.events.emit('livesChanged');
 
         if (lives <= 0) {
@@ -640,8 +946,9 @@ export class MountainScene extends Phaser.Scene {
         });
     }
 
-
-    
+    // =====================================
+    // NIVEL COMPLETADO
+    // =====================================
 
     completeMountain() {
         if (this.levelComplete) {
@@ -663,6 +970,7 @@ export class MountainScene extends Phaser.Scene {
         );
 
         this.time.delayedCall(2000, () => {
+
             this.cameras.main.fadeOut(500, 0, 0, 0);
 
             this.cameras.main.once(
@@ -674,7 +982,9 @@ export class MountainScene extends Phaser.Scene {
         });
     }
 
-
+    // =====================================
+    // ACTUALIZACIÓN DEL NIVEL
+    // =====================================
 
     update() {
         if (this.isRestarting || this.levelComplete) {
@@ -695,10 +1005,13 @@ export class MountainScene extends Phaser.Scene {
         }
 
         // Interactuar con carteles y salida.
+
         if (Phaser.Input.Keyboard.JustDown(
             this.interactKey
         )) {
+
             for (const sign of this.signs) {
+
                 const closeX =
                     Math.abs(this.player.x - sign.x) < 90;
 
@@ -706,7 +1019,12 @@ export class MountainScene extends Phaser.Scene {
                     Math.abs(this.player.y - sign.y) < 100;
 
                 if (closeX && closeY) {
-                    this.showMessage(sign.text);
+                    this.showMessage(
+                        sign.text,
+                        3000,
+                        sign.messagePosition
+                    );
+
                     return;
                 }
             }
