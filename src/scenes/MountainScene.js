@@ -306,31 +306,9 @@ export class MountainScene extends Phaser.Scene {
         ];
 
         this.signs.forEach(sign => {
-            this.add.rectangle(
-                sign.x,
-                sign.y + 18,
-                9,
-                50,
-                0x6d5040
-            );
-
-            this.add.rectangle(
-                sign.x,
-                sign.y,
-                65,
-                38,
-                0xcba46b
-            ).setStrokeStyle(3, 0x6d5040);
-
-            this.add.text(
-                sign.x,
-                sign.y,
-                '!',
-                {
-                    fontSize: '24px',
-                    color: '#3b291b'
-                }
-            ).setOrigin(0.5);
+            this.add.image(sign.x, sign.y + 32.5, 'sign')
+                .setOrigin(0.5, 1)
+                .setDisplaySize(72, 104);
         });
     }
 

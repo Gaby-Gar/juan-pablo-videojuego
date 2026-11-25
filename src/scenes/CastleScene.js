@@ -907,34 +907,9 @@ export class CastleScene extends Phaser.Scene {
         ];
 
         this.signs.forEach(sign => {
-            this.add.rectangle(
-                sign.x,
-                442,
-                9,
-                65,
-                0x76543d
-            );
-
-            this.add.rectangle(
-                sign.x,
-                410,
-                65,
-                38,
-                0xd8b77e
-            ).setStrokeStyle(
-                3,
-                0x76543d
-            );
-
-            this.add.text(
-                sign.x,
-                410,
-                '!',
-                {
-                    fontSize: '24px',
-                    color: '#382819'
-                }
-            ).setOrigin(0.5);
+            this.add.image(sign.x, 472.5, 'sign')
+                .setOrigin(0.5, 1)
+                .setDisplaySize(72, 104);
         });
     }
 
@@ -945,45 +920,28 @@ export class CastleScene extends Phaser.Scene {
     createChest() {
         this.chestX = 4900;
 
-        this.chest = this.add.rectangle(
+        // Sprite del cofre cerrado.
+        this.chest = this.add.image(
             this.chestX,
-            442,
-            85,
-            65,
-            0x9b6335
-        ).setStrokeStyle(
-            5,
-            0x4b2c1d
+            475,
+            'chest-closed'
         );
 
-        this.add.rectangle(
-            this.chestX,
-            420,
-            85,
-            18,
-            0xc68b47
-        ).setStrokeStyle(
-            3,
-            0x4b2c1d
-        );
+        this.chest
+            .setOrigin(0.5, 1)
+            .setDisplaySize(96, 96)
+            .setDepth(5);
 
-        this.add.rectangle(
-            this.chestX,
-            445,
-            18,
-            22,
-            0xf0cb62
-        );
-
+        // Identificador del cofre.
         this.add.text(
             this.chestX,
             365,
             'COFRE FINAL',
             {
                 fontFamily: 'Arial',
-                fontSize: '17px',
+                fontSize: '16px',
                 fontStyle: 'bold',
-                color: '#ffe3a0'
+                color: '#ffe4a8'
             }
         ).setOrigin(0.5);
     }
@@ -1234,10 +1192,29 @@ export class CastleScene extends Phaser.Scene {
         // Celebración de Juan.
         this.player.playVictory();
 
-        this.chest.setFillStyle(0xd6a14d);
+        // Mantener el cofre cerrado.
+        this.chest.setTexture('chest-closed');
+
+        // Destellos dorados.
+        this.createChestEffect();
+
+        // Hacer brillar el cofre.
+        this.chest.setTintFill(0xffe4a8);
+
+        this.time.delayedCall(180, () => {
+            this.chest.clearTint();
+        });
+
+        this.time.delayedCall(360, () => {
+            this.chest.setTintFill(0xffe4a8);
+        });
+
+        this.time.delayedCall(540, () => {
+            this.chest.clearTint();
+        });
 
         this.showMessage(
-            '¡COFRE ABIERTO!\n' +
+            '¡REGALO ENCONTRADO!\n' +
             'Has reunido las 30 monedas.\n' +
             '¡El caso ha sido resuelto!',
             2000
@@ -1245,6 +1222,67 @@ export class CastleScene extends Phaser.Scene {
 
         this.time.delayedCall(2000, () => {
             this.scene.start('EndingScene');
+        });
+    }
+
+    createChestEffect() {
+        const colors = [
+            0xffd700,
+            0xffe58a,
+            0xfff4c2,
+            0xf3a54a
+        ];
+
+        // Destellos dorados.
+        for (let i = 0; i < 24; i++) {
+            const particle = this.add.rectangle(
+                this.chestX + Phaser.Math.Between(-25, 25),
+                425,
+                Phaser.Math.Between(3, 6),
+                Phaser.Math.Between(3, 6),
+                Phaser.Utils.Array.GetRandom(colors)
+            );
+
+            particle.setDepth(15);
+
+            this.tweens.add({
+                targets: particle,
+
+                x: particle.x + Phaser.Math.Between(-90, 90),
+                y: particle.y - Phaser.Math.Between(50, 130),
+
+                alpha: 0,
+                angle: Phaser.Math.Between(-180, 180),
+                scale: 0.2,
+
+                duration: Phaser.Math.Between(600, 1400),
+                ease: 'Quad.easeOut',
+
+                onComplete: () => {
+                    particle.destroy();
+                }
+            });
+        }
+
+        // Pequeño efecto de iluminación.
+        const glow = this.add.circle(
+            this.chestX,
+            425,
+            35,
+            0xffd166,
+            0.35
+        ).setDepth(4);
+
+        this.tweens.add({
+            targets: glow,
+            scale: 2.5,
+            alpha: 0,
+            duration: 1000,
+            ease: 'Sine.easeOut',
+
+            onComplete: () => {
+                glow.destroy();
+            }
         });
     }
 

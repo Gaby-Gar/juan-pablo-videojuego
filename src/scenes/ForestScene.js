@@ -250,23 +250,11 @@ export class ForestScene extends Phaser.Scene {
             }
         ];
 
-        for (const sign of this.signs) {
-            this.add.rectangle(
-                sign.x, 440, 9, 65, 0x795548
-            );
-
-            this.add.rectangle(
-                sign.x, 412, 65, 38, 0xcba46b
-            ).setStrokeStyle(3, 0x795548);
-
-            this.add.text(
-                sign.x, 412, '!',
-                {
-                    fontSize: '24px',
-                    color: '#3b291b'
-                }
-            ).setOrigin(0.5);
-        }
+        this.signs.forEach(sign => {
+            this.add.image(sign.x, 472.5, 'sign')
+            .setOrigin(0.5, 1)
+            .setDisplaySize(72, 104);
+        });
     }
 
     createExit() {

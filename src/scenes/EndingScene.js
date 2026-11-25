@@ -16,21 +16,17 @@ export class EndingScene extends Phaser.Scene {
         this.createChest();
         this.createInstructions();
 
-        this.cameras.main.fadeIn(
-            600, 0, 0, 0
-        );
+        this.cameras.main.fadeIn(600, 0, 0, 0);
     }
 
     // =====================================
-    // FONDO DE ESTRELLAS
+    // 1. FONDO DE ESTRELLAS
     // =====================================
 
     createStars() {
-        // Estrellas provisionales.
         for (let i = 0; i < 55; i++) {
             const x = Phaser.Math.Between(20, 940);
             const y = Phaser.Math.Between(15, 470);
-
             const size = Phaser.Math.Between(2, 5);
 
             const star = this.add.circle(
@@ -60,7 +56,7 @@ export class EndingScene extends Phaser.Scene {
     }
 
     // =====================================
-    // TÍTULO DE VICTORIA
+    // 2. TÍTULO DE VICTORIA
     // =====================================
 
     createTitle() {
@@ -79,7 +75,7 @@ export class EndingScene extends Phaser.Scene {
 
         this.add.text(
             480, 165,
-            'Juan Pablo ha encontrado el regalo perdido',
+            'Juan ha encontrado el regalo perdido',
             {
                 fontFamily: 'Arial',
                 fontSize: '21px',
@@ -99,76 +95,91 @@ export class EndingScene extends Phaser.Scene {
     }
 
     // =====================================
-    // COFRE INTERACTIVO
+    // 3. COFRE INTERACTIVO
     // =====================================
 
     createChest() {
-        // Sombra.
+        // Sombra inferior.
         this.add.ellipse(
             480, 410,
-            230, 35,
+            210, 28,
             0x11111d,
             0.5
         );
 
-        // Base del cofre.
-        this.chestBase = this.add.rectangle(
-            480, 360,
-            180, 105,
-            0x9b6335
-        ).setStrokeStyle(
-            6, 0x4b2c1d
+        // Resplandor detrás del cofre.
+        this.chestGlow = this.add.circle(
+            480, 350,
+            85,
+            0xffd166,
+            0.08
+        ).setDepth(1);
+
+        // Sprite del cofre cerrado.
+        this.chest = this.add.image(
+            480,
+            410,
+            'chest-closed'
         );
 
-        // Tapa.
-        this.chestLid = this.add.rectangle(
-            480, 310,
-            190, 48,
-            0xc68b47
-        ).setStrokeStyle(
-            6, 0x4b2c1d
-        );
-
-        // Cerradura.
-        this.chestLock = this.add.rectangle(
-            480, 347,
-            28, 32,
-            0xf2cb65
-        );
+        this.chest
+            .setOrigin(0.5, 1)
+            .setDisplaySize(192, 192)
+            .setDepth(2);
 
         // Zona invisible para hacer clic.
         this.chestButton = this.add.rectangle(
-            480, 340,
-            210, 160,
+            480, 350,
+            190, 140,
             0xffffff,
             0
-        );
+        ).setDepth(5);
 
         this.chestButton.setInteractive({
             useHandCursor: true
         });
 
-        // Pequeña animación de espera.
+        // Flotación suave del cofre.
         this.tweens.add({
-            targets: [
-                this.chestBase,
-                this.chestLid,
-                this.chestLock
-            ],
-            y: '-=5',
+            targets: this.chest,
+            y: 402,
             duration: 1100,
+            ease: 'Sine.easeInOut',
             yoyo: true,
             repeat: -1
         });
 
-        this.chestButton.on(
-            'pointerdown',
-            () => this.openChest()
-        );
+        // Resplandor pulsante.
+        this.tweens.add({
+            targets: this.chestGlow,
+            alpha: 0.22,
+            scale: 1.2,
+            duration: 1200,
+            ease: 'Sine.easeInOut',
+            yoyo: true,
+            repeat: -1
+        });
+
+        // Resaltar el cofre al pasar el cursor.
+        this.chestButton.on('pointerover', () => {
+            if (!this.chestOpened) {
+                this.chest.setTint(0xffedbb);
+            }
+        });
+
+        this.chestButton.on('pointerout', () => {
+            if (!this.chestOpened) {
+                this.chest.clearTint();
+            }
+        });
+
+        this.chestButton.on('pointerdown', () => {
+            this.openChest();
+        });
     }
 
     // =====================================
-    // INDICACIONES
+    // 4. INDICACIONES
     // =====================================
 
     createInstructions() {
@@ -193,54 +204,146 @@ export class EndingScene extends Phaser.Scene {
     }
 
     // =====================================
-    // ABRIR EL COFRE
+    // 5. APERTURA DEL COFRE
     // =====================================
 
     openChest() {
-        if (this.chestOpened) {
-            return;
-        }
+        if (this.chestOpened) return;
 
         this.chestOpened = true;
 
+        // Evitar que pueda abrirse dos veces.
         this.chestButton.disableInteractive();
 
-        this.tweens.killTweensOf(
-            this.chestBase
-        );
-
-        this.tweens.killTweensOf(
-            this.chestLid
-        );
-
-        this.tweens.killTweensOf(
-            this.chestLock
-        );
-
-        this.tweens.killTweensOf(
-            this.instructions
-        );
+        // Detener las animaciones de espera.
+        this.tweens.killTweensOf(this.chest);
+        this.tweens.killTweensOf(this.chestGlow);
+        this.tweens.killTweensOf(this.instructions);
 
         this.instructions.setVisible(false);
 
-        // Abrir la tapa hacia arriba.
+        // Restablecer la posición del cofre.
+        this.chest.setPosition(480, 410);
+        this.chest.clearTint();
+
+        // Pequeña compresión antes de abrirse.
         this.tweens.add({
-            targets: this.chestLid,
-            y: 250,
-            angle: -12,
-            duration: 650,
-            ease: 'Back.easeOut',
+            targets: this.chest,
+
+            scaleX: 2.1,
+            scaleY: 1.85,
+
+            duration: 180,
+            ease: 'Sine.easeInOut',
 
             onComplete: () => {
-                this.showLetter();
+                // Cambiar al sprite abierto.
+                this.chest.setTexture('chest-open');
+
+                this.chest.setDisplaySize(192, 192);
+
+                // Efectos de apertura.
+                this.createOpeningEffect();
+
+                // Rebote al abrirse.
+                this.tweens.add({
+                    targets: this.chest,
+
+                    scaleX: 2.12,
+                    scaleY: 2.12,
+
+                    duration: 180,
+                    yoyo: true,
+                    ease: 'Sine.easeOut',
+
+                    onComplete: () => {
+                        this.chest.setDisplaySize(
+                            192, 192
+                        );
+                    }
+                });
+
+                // Dar tiempo para apreciar el cofre.
+                this.time.delayedCall(1800, () => {
+                    this.showLetter();
+                });
             }
         });
-
-        this.chestLock.setVisible(false);
     }
 
     // =====================================
-    // CARTA FINAL
+    // 6. EFECTOS DORADOS
+    // =====================================
+
+    createOpeningEffect() {
+        const colors = [
+            0xffd700,
+            0xffe58a,
+            0xfff4c2,
+            0xf3a54a,
+            0xffffff
+        ];
+
+        // Intensificar el resplandor.
+        this.chestGlow.setAlpha(0.35);
+
+        this.tweens.add({
+            targets: this.chestGlow,
+            scale: 2,
+            alpha: 0.1,
+            duration: 1500,
+            ease: 'Sine.easeOut'
+        });
+
+        // Destello inicial de pantalla.
+        this.cameras.main.flash(
+            300,
+            255, 220, 130
+        );
+
+        // Partículas doradas.
+        for (let i = 0; i < 40; i++) {
+            const size = Phaser.Math.Between(3, 7);
+
+            const particle = this.add.rectangle(
+                480 + Phaser.Math.Between(-55, 55),
+                325 + Phaser.Math.Between(-10, 10),
+                size,
+                size,
+                Phaser.Utils.Array.GetRandom(colors)
+            );
+
+            particle.setDepth(6);
+
+            this.tweens.add({
+                targets: particle,
+
+                x: particle.x +
+                    Phaser.Math.Between(-160, 160),
+
+                y: particle.y -
+                    Phaser.Math.Between(50, 180),
+
+                angle: Phaser.Math.Between(-180, 180),
+
+                alpha: 0,
+                scale: 0.2,
+
+                duration: Phaser.Math.Between(
+                    700, 1500
+                ),
+
+                ease: 'Quad.easeOut',
+
+                onComplete: () => {
+                    particle.destroy();
+                }
+            });
+        }
+    }
+
+    // =====================================
+    // 7. CARTA FINAL
     // =====================================
 
     showLetter() {
@@ -252,7 +355,7 @@ export class EndingScene extends Phaser.Scene {
             0.85
         ).setDepth(20);
 
-        // Papel.
+        // Papel de la carta.
         const paper = this.add.rectangle(
             480, 275,
             650, 390,
@@ -268,8 +371,10 @@ export class EndingScene extends Phaser.Scene {
 
         this.tweens.add({
             targets: paper,
+
             scale: 1,
             alpha: 1,
+
             duration: 550,
             ease: 'Back.easeOut',
 
@@ -279,10 +384,14 @@ export class EndingScene extends Phaser.Scene {
         });
     }
 
+    // =====================================
+    // 8. CONTENIDO DE LA CARTA
+    // =====================================
+
     showLetterText() {
         this.add.text(
             480, 130,
-            'PARA JUAN PABLO 💜',
+            'PARA JUAN 💜',
             {
                 fontFamily: 'Arial',
                 fontSize: '30px',
