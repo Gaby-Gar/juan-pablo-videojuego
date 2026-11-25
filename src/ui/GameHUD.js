@@ -92,6 +92,8 @@ export class GameHUD {
             this.coinsText
         ]);
 
+        this.createControls();
+        
         // Mostrar los valores actuales.
         this.refresh();
 
@@ -122,6 +124,129 @@ export class GameHUD {
                 this
             );
         });
+    }
+
+    createControls() {
+
+        const scene = this.scene;
+
+        // Contenedor de instrucciones.
+        const controls = scene.add.container(295, 9);
+
+        // Fondo del panel.
+        const background = scene.add.rectangle(
+            0, 0,
+            570, 52,
+            0x15243a, 0.9
+        )
+        .setOrigin(0)
+        .setStrokeStyle(1, 0x526070, 0.6);
+
+        controls.add(background);
+
+        // =====================================
+        // FUNCIÓN PARA DIBUJAR TECLAS
+        // =====================================
+
+        const key = (x, width, label) => {
+
+            const shadow = scene.add.rectangle(
+                x, 14,
+                width, 28,
+                0x0b1420
+            ).setOrigin(0);
+
+            const box = scene.add.rectangle(
+                x, 11,
+                width, 28,
+                0x384b5e
+            )
+            .setOrigin(0)
+            .setStrokeStyle(1, 0x8b9ca5);
+
+            const text = scene.add.text(
+                x + width / 2,
+                25,
+                label,
+                {
+                    fontFamily: 'Pixelify Sans, monospace',
+                    fontSize: '16px',
+                    fontStyle: 'bold',
+                    color: '#f5e6c8'
+                }
+            ).setOrigin(0.5);
+
+            controls.add([shadow, box, text]);
+        };
+
+        // =====================================
+        // FUNCIÓN PARA LAS DESCRIPCIONES
+        // =====================================
+
+        const description = (x, label) => {
+
+            const text = scene.add.text(
+                x, 25,
+                label,
+                {
+                    fontFamily: 'Pixelify Sans, monospace',
+                    fontSize: '17px',
+                    color: '#f5e6c8'
+                }
+            ).setOrigin(0, 0.5);
+
+            controls.add(text);
+        };
+
+        // Separadores entre instrucciones.
+        const separator = (x) => {
+
+            const line = scene.add.rectangle(
+                x, 26,
+                1, 30,
+                0x526070
+            );
+
+            controls.add(line);
+        };
+
+        // =====================================
+        // MOVIMIENTO
+        // =====================================
+
+        key(14, 27, 'A');
+        key(46, 27, 'D');
+
+        description(85, 'Mover');
+
+        separator(155);
+
+        // =====================================
+        // SALTO
+        // =====================================
+
+        key(170, 88, 'ESPACIO');
+
+        const isMountain =
+            scene.sys.settings.key === 'MountainScene';
+
+        description(
+            270,
+            isMountain ? 'Doble salto' : 'Saltar'
+        );
+
+        separator(395);
+
+        // =====================================
+        // INTERACCIÓN
+        // =====================================
+
+        key(410, 27, 'E');
+
+        description(449, 'Interactuar');
+
+        // Integrar las instrucciones al HUD.
+        this.container.add(controls);
     }
 
     // =====================================

@@ -16,16 +16,20 @@ import { EndingScene } from './scenes/EndingScene.js';
 
 import './styles/main.css';
 
-new Phaser.Game({
-    ...gameConfig,
-    scene: [
-        BootScene,
-        MenuScene,
-        IntroScene,
-        LevelSelectScene,
-        ForestScene,
-        MountainScene,
-        CastleScene,
-        EndingScene
-    ]
-});
+document.fonts.load('400 22px "Pixelify Sans"')
+    .catch(() => {})
+    .then(() => {
+        new Phaser.Game({
+            ...gameConfig,
+            scene: [
+                BootScene,
+                MenuScene,
+                IntroScene,
+                LevelSelectScene,
+                ForestScene,
+                MountainScene,
+                CastleScene,
+                EndingScene
+            ]
+        });
+    });

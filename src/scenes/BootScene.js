@@ -42,7 +42,35 @@ export class BootScene extends Phaser.Scene {
         this.load.image('slime-01', `${enemiesPath}slime_01.png`);
         this.load.image('slime-02', `${enemiesPath}slime_02.png`);
 
+        // Fondos de los escenarios.
+        const backgroundsPath = `${import.meta.env.BASE_URL}assets/backgrounds/`;
 
+        this.load.image(
+            'forest-background',
+            `${backgroundsPath}forest_background.png`
+        );
+
+        // Texturas del terreno.
+        const tilesPath = `${import.meta.env.BASE_URL}assets/tiles/`;
+
+        this.load.image(
+            'forest-ground',
+            `${tilesPath}forest_ground.png`
+        );
+
+        //Plataformas
+        this.load.image(
+            'forest-platform',
+            `${tilesPath}forest_platform.png`
+        );
+
+        //troncos
+        this.load.image(
+            'forest-log',
+            `${objectsPath}forest_log.png`
+        );
+
+        this.load.image('forest-exit', `${objectsPath}forest_exit.png`);
 
     }
 
