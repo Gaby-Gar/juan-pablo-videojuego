@@ -106,6 +106,40 @@ export class BootScene extends Phaser.Scene {
             `${objectsPath}mountain_exit.png`
         );
 
+        // =====================================
+        // RECURSOS DEL CASTILLO
+        // =====================================
+
+        this.load.image(
+            'castle-background',
+            `${import.meta.env.BASE_URL}assets/backgrounds/castle_background.png`
+        );
+
+        this.load.image(
+            'castle-ground',
+            `${import.meta.env.BASE_URL}assets/tiles/castle_ground.png`
+        );
+
+        this.load.image(
+            'castle-platform',
+            `${import.meta.env.BASE_URL}assets/tiles/castle_platform.png`
+        );
+
+        this.load.image(
+            'castle-moving-platform',
+            `${import.meta.env.BASE_URL}assets/tiles/castle_moving_platform.png`
+        );
+
+        this.load.image(
+            'castle-lava',
+            `${import.meta.env.BASE_URL}assets/tiles/castle_lava.png`
+        );
+
+        this.load.image(
+            'castle-spike',
+            `${import.meta.env.BASE_URL}assets/objects/castle_spike.png`
+        );
+
     }
 
     // =====================================

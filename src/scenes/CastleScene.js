@@ -32,22 +32,17 @@ export class CastleScene extends Phaser.Scene {
         this.slimes = [];
 
         this.physics.world.setBounds(
-            0,
-            0,
+            0, 0,
             this.worldWidth,
             this.worldHeight
         );
 
         this.physics.world.setBoundsCollision(
-            true,
-            true,
-            true,
-            false
+            true, true, true, false
         );
 
         this.cameras.main.setBounds(
-            0,
-            0,
+            0, 0,
             this.worldWidth,
             540
         );
@@ -78,12 +73,8 @@ export class CastleScene extends Phaser.Scene {
         );
 
         this.cameras.main.fadeIn(
-            500,
-            0,
-            0,
-            0
+            500, 0, 0, 0
         );
-
 
         // Volver a la selección de niveles con ESC.
         this.input.keyboard.on('keydown-ESC', () => {
@@ -97,7 +88,6 @@ export class CastleScene extends Phaser.Scene {
 
             this.scene.start('LevelSelectScene');
         });
-
     }
 
     // =====================================
@@ -109,134 +99,59 @@ export class CastleScene extends Phaser.Scene {
             '#211d33'
         );
 
-        // Paredes de piedra.
-        for (
-            let x = 0;
-            x < this.worldWidth;
-            x += 120
-        ) {
-            for (
-                let y = 0;
-                y < 540;
-                y += 80
-            ) {
-                const offset =
-                    y % 160 === 0 ? 0 : 60;
+        // Fondo medieval repetido horizontalmente.
+        const background = this.add.tileSprite(
+            0,
+            0,
+            this.worldWidth,
+            540,
+            'castle-background'
+        )
+        .setOrigin(0, 0)
+        .setDepth(-20);
 
-                this.add.rectangle(
-                    x + offset,
-                    y,
-                    116,
-                    76,
-                    0x343047
-                )
-                .setStrokeStyle(
-                    2,
-                    0x211e32
-                )
-                .setDepth(-10);
-            }
-        }
+        // Mantener las proporciones del fondo.
+        const texture = this.textures
+            .get('castle-background')
+            .getSourceImage();
 
-        // Ventanas del castillo.
-        for (
-            let x = 480;
-            x < this.worldWidth;
-            x += 600
-        ) {
-            this.add.rectangle(
-                x,
-                185,
-                65,
-                150,
-                0x151a30
-            )
-            .setStrokeStyle(
-                6,
-                0x625b78
-            )
-            .setDepth(-8);
+        const scale = 540 / texture.height;
 
-            this.add.rectangle(
-                x,
-                185,
-                5,
-                150,
-                0x625b78
-            ).setDepth(-7);
-        }
-
-        // Antorchas decorativas.
-        for (
-            let x = 250;
-            x < this.worldWidth;
-            x += 400
-        ) {
-            this.add.rectangle(
-                x,
-                320,
-                12,
-                45,
-                0x75513b
-            ).setDepth(-5);
-
-            this.add.circle(
-                x,
-                285,
-                18,
-                0xf28d32
-            ).setDepth(-4);
-
-            this.add.circle(
-                x,
-                291,
-                10,
-                0xffda61
-            ).setDepth(-3);
-        }
-
-        this.add.text(
-            100,
-            145,
-            'CASTILLO DEL ÚLTIMO VEREDICTO',
-            {
-                fontFamily: 'Arial',
-                fontSize: '27px',
-                fontStyle: 'bold',
-                color: '#f6e4b7'
-            }
+        background.setTileScale(
+            scale,
+            scale
         );
 
+        // Identificador de la torre superior.
         this.add.text(
             1460,
             90,
             'TORRE DE LAS PRUEBAS',
             {
-                fontFamily: 'Arial',
-                fontSize: '24px',
+                fontFamily: 'Pixelify Sans, monospace',
+                fontSize: '25px',
                 fontStyle: 'bold',
-                color: '#e7d6ff'
+                color: '#f5e6c8',
+                stroke: '#211d30',
+                strokeThickness: 5
             }
-        );
+        ).setDepth(-2);
     }
 
     // =====================================
     // 2. PLATAFORMAS ESTÁTICAS
     // =====================================
 
-    addPlatform(
-        x,
-        y,
-        width,
-        height,
-        color
-    ) {
+    addPlatform(x, y, width, height, color) {
+
+        // Conservar la colisión original.
         const object = this.add.rectangle(
             x,
             y,
             width,
             height,
-            color
+            color,
+            0
         );
 
         this.physics.add.existing(
@@ -245,6 +160,42 @@ export class CastleScene extends Phaser.Scene {
         );
 
         this.platforms.add(object);
+
+        // Los segmentos altos corresponden al suelo.
+        if (height === 60) {
+
+            const ground = this.add.tileSprite(
+                x - width / 2,
+                y - height / 2,
+                width,
+                height,
+                'castle-ground'
+            )
+            .setOrigin(0, 0)
+            .setDepth(1);
+
+            const texture = this.textures
+                .get('castle-ground')
+                .getSourceImage();
+
+            const scale = height / texture.height;
+
+            ground.setTileScale(
+                scale,
+                scale
+            );
+
+        } else {
+
+            // Plataformas metálicas estáticas.
+            this.add.image(
+                x,
+                y,
+                'castle-platform'
+            )
+            .setDisplaySize(width, height)
+            .setDepth(1);
+        }
 
         return object;
     }
@@ -435,10 +386,10 @@ export class CastleScene extends Phaser.Scene {
             365,
             190,
             22,
-            0xa17b79
+            0x94839c
         );
 
-        // Plataforma de la última moneda.
+        // Plataforma estática de la última moneda.
         this.addPlatform(
             4720,
             405,
@@ -453,15 +404,16 @@ export class CastleScene extends Phaser.Scene {
     // =====================================
 
     addMovingPlatform(config) {
+
+        // Colisión invisible.
+        // Conserva las dimensiones originales.
         const object = this.add.rectangle(
             config.x,
             config.y,
             config.width,
             22,
-            0x5da7ba
-        ).setStrokeStyle(
-            3,
-            0xb2e8f2
+            0x5da7ba,
+            0
         );
 
         this.physics.add.existing(
@@ -471,8 +423,53 @@ export class CastleScene extends Phaser.Scene {
 
         this.platforms.add(object);
 
+        // Imagen de la plataforma encantada.
+        // Los engranajes quedan debajo de la colisión.
+        const visual = this.add.image(
+            config.x,
+            config.y - 11,
+            'castle-moving-platform'
+        )
+        .setOrigin(0.5, 0)
+        .setDisplaySize(config.width, 36)
+        .setDepth(2);
+
+        // Pequeños destellos de energía mágica.
+        const magicParticles = [];
+
+        for (let i = 0; i < 5; i++) {
+
+            const particle = this.add.rectangle(
+                config.x,
+                config.y,
+                3,
+                3,
+                i % 2 === 0
+                    ? 0xc56cff
+                    : 0xf2d0ff
+            )
+            .setDepth(3);
+
+            const magic = {
+                object: particle,
+                offsetX: Phaser.Math.Between(
+                    -Math.floor(config.width * 0.35),
+                    Math.floor(config.width * 0.35)
+                ),
+                offsetY: Phaser.Math.Between(20, 35),
+                phase: Phaser.Math.FloatBetween(
+                    0,
+                    Math.PI * 2
+                )
+            };
+
+            magicParticles.push(magic);
+        }
+
         this.movingPlatforms.push({
             object,
+            visual,
+            magicParticles,
             minX: config.minX,
             maxX: config.maxX,
             minY: config.minY,
@@ -499,6 +496,7 @@ export class CastleScene extends Phaser.Scene {
                 platform.minX !== platform.maxX;
 
             if (movingHorizontally) {
+
                 object.x +=
                     platform.speed *
                     platform.direction *
@@ -517,7 +515,9 @@ export class CastleScene extends Phaser.Scene {
                     object.x = platform.minX;
                     platform.direction = 1;
                 }
+
             } else {
+
                 object.y -=
                     platform.speed *
                     platform.direction *
@@ -570,6 +570,31 @@ export class CastleScene extends Phaser.Scene {
 
             // Sincronizar la colisión.
             object.body.updateFromGameObject();
+
+            // Sincronizar la imagen.
+            platform.visual.setPosition(
+                object.x,
+                object.y - 11
+            );
+
+            // Movimiento decorativo de la magia.
+            platform.magicParticles.forEach(magic => {
+
+                const wave =
+                    this.time.now * 0.004 +
+                    magic.phase;
+
+                magic.object.setPosition(
+                    object.x + magic.offsetX,
+                    object.y + magic.offsetY +
+                    Math.sin(wave) * 4
+                );
+
+                magic.object.setAlpha(
+                    0.35 +
+                    (Math.sin(wave) + 1) * 0.325
+                );
+            });
         }
     }
 
@@ -578,6 +603,7 @@ export class CastleScene extends Phaser.Scene {
     // =====================================
 
     createLava() {
+
         // Ambas zonas coinciden exactamente
         // con los huecos del suelo.
         this.lavaZones = [
@@ -591,41 +617,101 @@ export class CastleScene extends Phaser.Scene {
             }
         ];
 
+        this.lavaVisuals = [];
+
         this.lavaZones.forEach(zone => {
+
             const width =
                 zone.right - zone.left;
 
-            const centerX =
-                (zone.left + zone.right) / 2;
-
+            // Base para evitar espacios transparentes.
             this.add.rectangle(
-                centerX,
-                545,
+                zone.left,
+                485,
                 width,
                 130,
-                0xb93219
-            ).setDepth(-1);
+                0x9e180c
+            )
+            .setOrigin(0, 0)
+            .setDepth(-1);
 
-            this.add.rectangle(
-                centerX,
-                489,
+            // Textura de lava repetida.
+            const lava = this.add.tileSprite(
+                zone.left,
+                480,
                 width,
-                18,
-                0xff7a21
+                60,
+                'castle-lava'
+            )
+            .setOrigin(0, 0)
+            .setDepth(0);
+
+            const texture = this.textures
+                .get('castle-lava')
+                .getSourceImage();
+
+            const scale = 60 / texture.height;
+
+            lava.setTileScale(
+                scale,
+                scale
             );
 
-            for (
-                let x = zone.left + 30;
-                x < zone.right;
-                x += 65
-            ) {
-                this.add.circle(
-                    x,
-                    510,
-                    9,
-                    0xffb43b
+            this.lavaVisuals.push(lava);
+
+            // Pequeñas chispas sobre la lava.
+            for (let i = 0; i < 8; i++) {
+
+                const x = Phaser.Math.Between(
+                    zone.left + 15,
+                    zone.right - 15
                 );
+
+                const spark = this.add.rectangle(
+                    x,
+                    480,
+                    3,
+                    3,
+                    i % 2 === 0
+                        ? 0xffb52e
+                        : 0xffe16a
+                )
+                .setDepth(2)
+                .setAlpha(0);
+
+                this.tweens.add({
+                    targets: spark,
+                    y: 450,
+                    alpha: {
+                        from: 0.85,
+                        to: 0
+                    },
+                    duration: Phaser.Math.Between(
+                        700,
+                        1300
+                    ),
+                    delay: Phaser.Math.Between(
+                        0,
+                        1800
+                    ),
+                    repeat: -1,
+                    repeatDelay: Phaser.Math.Between(
+                        400,
+                        1200
+                    ),
+                    ease: 'Sine.easeOut'
+                });
             }
+        });
+    }
+
+    updateLavaVisuals(delta) {
+
+        // Animación exclusivamente gráfica.
+        const dt = Math.min(delta, 50) / 1000;
+
+        this.lavaVisuals.forEach(lava => {
+            lava.tilePositionX += 12 * dt;
         });
     }
 
@@ -642,6 +728,7 @@ export class CastleScene extends Phaser.Scene {
 
         const touchingLava =
             this.lavaZones.some(zone => {
+
                 const overlapsHorizontally =
                     body.right >
                         zone.left + 8 &&
@@ -678,6 +765,9 @@ export class CastleScene extends Phaser.Scene {
 
         // Solo un salto en el castillo.
         this.player.setDoubleJump(false);
+
+        // Juan permanece delante de la decoración.
+        this.player.setDepth(10);
 
         this.physics.add.collider(
             this.player,
@@ -752,6 +842,7 @@ export class CastleScene extends Phaser.Scene {
             );
 
             slime.setTint(0xff6833);
+            slime.setDepth(4);
 
             this.physics.add.collider(
                 slime,
@@ -812,6 +903,7 @@ export class CastleScene extends Phaser.Scene {
             startX,
             count
         ) => {
+
             for (
                 let i = 0;
                 i < count;
@@ -820,21 +912,17 @@ export class CastleScene extends Phaser.Scene {
                 const x =
                     startX + i * 24;
 
-                this.add.triangle(
+                // Imagen del pincho metálico.
+                this.add.image(
                     x,
-                    466,
-                    0,
-                    30,
-                    12,
-                    0,
-                    24,
-                    30,
-                    0xc8c9d6
-                ).setStrokeStyle(
-                    2,
-                    0x7c7f91
-                );
+                    480,
+                    'castle-spike'
+                )
+                .setOrigin(0.5, 1)
+                .setDisplaySize(24, 32)
+                .setDepth(3);
 
+                // Conservar la colisión original.
                 const hitbox =
                     this.add.rectangle(
                         x,
@@ -894,7 +982,7 @@ export class CastleScene extends Phaser.Scene {
                 x: 170,
                 text:
                     'Última audiencia:\n' +
-                    'las plataformas azules se mueven.\n' +
+                    'Las plataformas encantadas se mueven.\n' +
                     'Calcula bien tus saltos.'
             },
             {
@@ -907,9 +995,14 @@ export class CastleScene extends Phaser.Scene {
         ];
 
         this.signs.forEach(sign => {
-            this.add.image(sign.x, 472.5, 'sign')
-                .setOrigin(0.5, 1)
-                .setDisplaySize(72, 104);
+            this.add.image(
+                sign.x,
+                480,
+                'sign'
+            )
+            .setOrigin(0.5, 1)
+            .setDisplaySize(72, 104)
+            .setDepth(2);
         });
     }
 
@@ -938,12 +1031,16 @@ export class CastleScene extends Phaser.Scene {
             365,
             'COFRE FINAL',
             {
-                fontFamily: 'Arial',
-                fontSize: '16px',
+                fontFamily: 'Pixelify Sans, monospace',
+                fontSize: '19px',
                 fontStyle: 'bold',
-                color: '#ffe4a8'
+                color: '#ffe4a8',
+                stroke: '#211d30',
+                strokeThickness: 4
             }
-        ).setOrigin(0.5);
+        )
+        .setOrigin(0.5)
+        .setDepth(6);
     }
 
     // =====================================
@@ -951,47 +1048,168 @@ export class CastleScene extends Phaser.Scene {
     // =====================================
 
     createInterface() {
-        this.add.text(
-            20,
-            85,
-            'A/D: mover | ESPACIO: saltar | E: interactuar',
-            {
-                fontFamily: 'Arial',
-                fontSize: '16px',
-                color: '#ffffff',
-                backgroundColor: '#403950',
-                padding: {
-                    x: 10,
-                    y: 7
-                }
-            }
+
+        // Las instrucciones ahora se muestran
+        // exclusivamente desde GameHUD.
+
+        // =====================================
+        // TÍTULO DEL NIVEL
+        // =====================================
+
+        this.titleContainer = this.add.container(
+            480,
+            105
         )
         .setScrollFactor(0)
-        .setDepth(100);
+        .setDepth(110);
 
-        this.message = this.add.text(
-            480,
-            440,
-            '',
-            {
-                fontFamily: 'Arial',
-                fontSize: '20px',
-                color: '#ffffff',
-                backgroundColor: '#403950',
-                padding: {
-                    x: 18,
-                    y: 12
-                },
-                align: 'center',
-                wordWrap: {
-                    width: 750
-                }
-            }
+        const titleShadow = this.add.rectangle(
+            0,
+            4,
+            610,
+            48,
+            0x10101a,
+            0.55
+        );
+
+        const titleBackground = this.add.rectangle(
+            0,
+            0,
+            610,
+            48,
+            0x211d30,
+            0.95
         )
-        .setOrigin(0.5)
+        .setStrokeStyle(2, 0xd6a14d);
+
+        const titleInnerBorder = this.add.rectangle(
+            0,
+            0,
+            598,
+            36,
+            0x211d30,
+            0
+        )
+        .setStrokeStyle(1, 0x766079);
+
+        const title = this.add.text(
+            0,
+            0,
+            'CASTILLO DEL ÚLTIMO VEREDICTO',
+            {
+                fontFamily: 'Pixelify Sans, monospace',
+                fontSize: '26px',
+                fontStyle: 'bold',
+                color: '#f5e6c8',
+                stroke: '#171421',
+                strokeThickness: 3
+            }
+        ).setOrigin(0.5);
+
+        this.titleContainer.add([
+            titleShadow,
+            titleBackground,
+            titleInnerBorder,
+            title
+        ]);
+
+        // El título se desvanece después
+        // de presentar el nivel.
+        this.time.delayedCall(3500, () => {
+            this.tweens.add({
+                targets: this.titleContainer,
+                alpha: 0,
+                duration: 500,
+                onComplete: () => {
+                    this.titleContainer.setVisible(false);
+                }
+            });
+        });
+
+        // =====================================
+        // PANEL DE MENSAJES
+        // =====================================
+
+        this.messageContainer = this.add.container(
+            480,
+            145
+        )
         .setScrollFactor(0)
         .setDepth(200)
         .setVisible(false);
+
+        // Sombra del panel.
+        this.messageShadow = this.add.rectangle(
+            4,
+            5,
+            560,
+            120,
+            0x10101a,
+            0.6
+        );
+
+        // Fondo principal.
+        this.messageBackground = this.add.rectangle(
+            0,
+            0,
+            560,
+            120,
+            0x30283d,
+            0.97
+        )
+        .setStrokeStyle(3, 0xd6a14d);
+
+        // Borde decorativo interior.
+        this.messageInnerBorder = this.add.rectangle(
+            0,
+            0,
+            548,
+            108,
+            0x30283d,
+            0
+        )
+        .setStrokeStyle(1, 0x806b79);
+
+        // Adornos de las esquinas.
+        this.messageCorners = [];
+
+        for (let i = 0; i < 4; i++) {
+
+            const corner = this.add.rectangle(
+                0,
+                0,
+                6,
+                6,
+                0xffd166
+            );
+
+            this.messageCorners.push(corner);
+        }
+
+        // Texto del mensaje.
+        this.message = this.add.text(
+            0,
+            0,
+            '',
+            {
+                fontFamily: 'Pixelify Sans, monospace',
+                fontSize: '21px',
+                color: '#f5e6c8',
+                align: 'center',
+                lineSpacing: 6,
+                wordWrap: {
+                    width: 660
+                }
+            }
+        ).setOrigin(0.5);
+
+        this.messageContainer.add([
+            this.messageShadow,
+            this.messageBackground,
+            this.messageInnerBorder,
+            ...this.messageCorners,
+            this.message
+        ]);
     }
 
     showMessage(
@@ -1002,14 +1220,98 @@ export class CastleScene extends Phaser.Scene {
             this.messageTimer.remove();
         }
 
+        this.tweens.killTweensOf(
+            this.messageContainer
+        );
+
         this.message.setText(text);
-        this.message.setVisible(true);
+
+        // Ajustar el tamaño del panel
+        // a la cantidad de texto.
+        const width = Math.max(
+            330,
+            Math.min(
+                720,
+                this.message.width + 54
+            )
+        );
+
+        const height =
+            this.message.height + 34;
+
+        this.messageBackground.setSize(
+            width,
+            height
+        );
+
+        this.messageShadow.setSize(
+            width,
+            height
+        );
+
+        this.messageInnerBorder.setSize(
+            width - 12,
+            height - 12
+        );
+
+        // Reposicionar los adornos.
+        const cornerPositions = [
+            [-width / 2 + 8, -height / 2 + 8],
+            [width / 2 - 8, -height / 2 + 8],
+            [-width / 2 + 8, height / 2 - 8],
+            [width / 2 - 8, height / 2 - 8]
+        ];
+
+        this.messageCorners.forEach(
+            (corner, index) => {
+                corner.setPosition(
+                    cornerPositions[index][0],
+                    cornerPositions[index][1]
+                );
+            }
+        );
+
+        // Mantener todos los mensajes arriba,
+        // debajo del HUD y del título inicial.
+        const top = this.titleContainer.visible
+            ? 145
+            : 78;
+
+        this.messageContainer.setPosition(
+            480,
+            top + height / 2
+        );
+
+        this.messageContainer
+            .setVisible(true)
+            .setAlpha(0)
+            .setScale(0.97);
+
+        // Animación de entrada.
+        this.tweens.add({
+            targets: this.messageContainer,
+            alpha: 1,
+            scale: 1,
+            duration: 180,
+            ease: 'Sine.easeOut'
+        });
 
         this.messageTimer =
             this.time.delayedCall(
                 duration,
                 () => {
-                    this.message.setVisible(false);
+
+                    this.tweens.add({
+                        targets: this.messageContainer,
+                        alpha: 0,
+                        duration: 180,
+
+                        onComplete: () => {
+                            this.messageContainer
+                                .setVisible(false);
+                        }
+                    });
+
                     this.messageTimer = null;
                 }
             );
@@ -1020,6 +1322,10 @@ export class CastleScene extends Phaser.Scene {
     // =====================================
 
     updateCheckpoint() {
+
+        // Se conservan los dos primeros puntos.
+        // Se elimina el último de la cámara final.
+
         const checkpoints = [
             {
                 x: 1300,
@@ -1028,10 +1334,6 @@ export class CastleScene extends Phaser.Scene {
             {
                 x: 3100,
                 threshold: 3100
-            },
-            {
-                x: 4350,
-                threshold: 4350
             }
         ];
 
@@ -1056,7 +1358,6 @@ export class CastleScene extends Phaser.Scene {
     // =====================================
     // 13. SISTEMA DE DAÑO
     // =====================================
-
 
     damagePlayer(enemy = null, cause = 'fall') {
         if (
@@ -1084,7 +1385,8 @@ export class CastleScene extends Phaser.Scene {
                 cause === 'fall'
             ) {
                 this.player.setPosition(
-                    this.checkpointX, 448
+                    this.checkpointX,
+                    448
                 );
 
                 this.cameras.main.centerOn(
@@ -1120,7 +1422,9 @@ export class CastleScene extends Phaser.Scene {
                 direction * 220,
                 -250
             );
+
         } else {
+
             // Lava, pinchos o caída.
             this.player.setPosition(
                 this.checkpointX,
@@ -1145,7 +1449,6 @@ export class CastleScene extends Phaser.Scene {
             }
         });
     }
-
 
     // =====================================
     // 14. INTERACCIÓN CON EL COFRE
@@ -1177,8 +1480,6 @@ export class CastleScene extends Phaser.Scene {
     // =====================================
     // 15. COMPLETAR EL CASTILLO
     // =====================================
-
-   
 
     completeCastle() {
         if (this.levelComplete) {
@@ -1235,8 +1536,10 @@ export class CastleScene extends Phaser.Scene {
 
         // Destellos dorados.
         for (let i = 0; i < 24; i++) {
+
             const particle = this.add.rectangle(
-                this.chestX + Phaser.Math.Between(-25, 25),
+                this.chestX +
+                    Phaser.Math.Between(-25, 25),
                 425,
                 Phaser.Math.Between(3, 6),
                 Phaser.Math.Between(3, 6),
@@ -1248,14 +1551,21 @@ export class CastleScene extends Phaser.Scene {
             this.tweens.add({
                 targets: particle,
 
-                x: particle.x + Phaser.Math.Between(-90, 90),
-                y: particle.y - Phaser.Math.Between(50, 130),
+                x: particle.x +
+                    Phaser.Math.Between(-90, 90),
+
+                y: particle.y -
+                    Phaser.Math.Between(50, 130),
 
                 alpha: 0,
                 angle: Phaser.Math.Between(-180, 180),
                 scale: 0.2,
 
-                duration: Phaser.Math.Between(600, 1400),
+                duration: Phaser.Math.Between(
+                    600,
+                    1400
+                ),
+
                 ease: 'Quad.easeOut',
 
                 onComplete: () => {
@@ -1286,13 +1596,15 @@ export class CastleScene extends Phaser.Scene {
         });
     }
 
-
-
     // =====================================
     // 16. ACTUALIZACIÓN DEL NIVEL
     // =====================================
 
     update(time, delta) {
+
+        // Animación gráfica de la lava.
+        this.updateLavaVisuals(delta);
+
         if (
             this.isRestarting ||
             this.levelComplete
@@ -1334,6 +1646,7 @@ export class CastleScene extends Phaser.Scene {
                 this.interactKey
             )
         ) {
+
             for (
                 const sign of this.signs
             ) {
