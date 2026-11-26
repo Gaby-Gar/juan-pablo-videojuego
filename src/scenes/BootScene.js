@@ -140,6 +140,12 @@ export class BootScene extends Phaser.Scene {
             `${import.meta.env.BASE_URL}assets/objects/castle_spike.png`
         );
 
+
+        this.load.image(
+            'menu-background',
+            `${import.meta.env.BASE_URL}assets/backgrounds/menu_background.png`
+        );
+
     }
 
     // =====================================
