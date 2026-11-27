@@ -146,6 +146,54 @@ export class BootScene extends Phaser.Scene {
             `${import.meta.env.BASE_URL}assets/backgrounds/menu_background.png`
         );
 
+        this.load.image(
+            'level-select-background',
+            `${import.meta.env.BASE_URL}assets/backgrounds/level_select_background.png`
+        );
+
+        // =====================================
+        // RECURSOS DEL PRÓLOGO
+        // =====================================
+
+        this.load.image(
+            'intro-background',
+            `${import.meta.env.BASE_URL}assets/backgrounds/intro_background.png`
+        );
+
+        this.load.image(
+            'intro-juan-working',
+            `${import.meta.env.BASE_URL}assets/characters/juan/intro_juan_working.png`
+        );
+
+        this.load.image(
+            'intro-juan-surprised',
+            `${import.meta.env.BASE_URL}assets/characters/juan/intro_juan_surprised.png`
+        );
+
+        this.load.image(
+            'intro-juan-reading',
+            `${import.meta.env.BASE_URL}assets/characters/juan/intro_juan_reading.png`
+        );
+
+        this.load.image(
+            'intro-juan-ready',
+            `${import.meta.env.BASE_URL}assets/characters/juan/intro_juan_ready.png`
+        );
+
+        // =====================================
+        // RECURSOS DE LA ESCENA FINAL
+        // =====================================
+
+        this.load.image(
+            'ending-background',
+            `${import.meta.env.BASE_URL}assets/backgrounds/ending_background.png`
+        );
+
+        this.load.image(
+            'ending-letter',
+            `${import.meta.env.BASE_URL}assets/ui/ending_letter.png`
+        );
+
     }
 
     // =====================================
